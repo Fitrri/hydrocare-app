@@ -1,0 +1,39 @@
+-- Tabel untuk menyimpan data pengguna
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    weight INTEGER NOT NULL,
+    usia TEXT NOT NULL,
+    activity TEXT NOT NULL,
+    cuaca TEXT NOT NULL,
+    kondisi TEXT NOT NULL,
+    interval INTEGER NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabel untuk menyimpan riwayat konsumsi air (jika ingin tracking kapan user minum)
+CREATE TABLE drink_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Tabel untuk menyimpan XP dan Level
+CREATE TABLE user_progress (
+    user_id INTEGER PRIMARY KEY,
+    xp INTEGER DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- (Opsional) Tabel untuk menyimpan rekaman audio sebagai notifikasi
+CREATE TABLE audio_notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    file_path TEXT NOT NULL,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
