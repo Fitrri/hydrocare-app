@@ -1,0 +1,20 @@
+{
+  "name": "HydroCare",
+  "short_name": "HydroCare",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e90ff",
+  "icons": [
+    {
+      "src": "/static/hydrocare-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/hydrocare-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

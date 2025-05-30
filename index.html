@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HydroCare</title>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* Contoh kecil styling untuk toggle switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    .switch input { display: none; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 12px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px; width: 18px;
+      left: 3px; bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    .audio-control-wrapper {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .audio-button-group button {
+      font-size: 1.2rem;
+      cursor: pointer;
+      background: #eee;
+      border: none;
+      border-radius: 5px;
+      padding: 0.3rem 0.6rem;
+      transition: background 0.3s;
+    }
+    .audio-button-group button:hover:not(:disabled) {
+      background: #ddd;
+    }
+    .dot {
+      height: 10px;
+      width: 10px;
+      background-color: red;
+      border-radius: 50%;
+      display: inline-block;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <audio id="reminderSound" style="display: none;"></audio>
+  <audio id="notification-sound" src="{{ url_for('static', filename='audio/default-notification.mp3') }}" preload="auto"></audio>
+
+
+  <div class="sticky-logo">
+    <img src="{{ url_for('static', filename='logoku2.png') }}" alt="Logo">
+    <span class="app-title"></span>
+  </div>
+
+  <div class="container">
+    <p>Stay hydrated. Stay healthy.</p>
+
+    <form id="userForm">
+      <input type="text" id="name" placeholder="Nama kamu" required />
+      <input type="number" id="weight" placeholder="Berat badan (kg)" required min="1" />
+      
+      <label for="interval">Interval minum (menit):</label>
+      <input type="number" id="interval" placeholder="Contoh: 1" required min="1" />
+  
+      <label for="usia">Kelompok usia:</label>
+      <select id="usia" required>
+        <option value="anak">Anak-anak</option>
+        <option value="remaja">Remaja</option>
+        <option value="wanita_dewasa">Wanita Dewasa</option>
+        <option value="pria_dewasa">Pria Dewasa</option>
+      </select>
+
+      <label for="activity">Aktivitas harian:</label>
+      <select id="activity" title="Pilih tingkat aktivitas harian">
+        <option value="tidak_aktif" title="Minim gerak, misalnya duduk terus">Tidak Aktif</option>
+        <option value="ringan" title="Aktivitas ringan seperti jalan santai atau pekerjaan rumah">Ringan</option>
+        <option value="sedang" title="Olahraga ringan atau aktivitas dengan intensitas sedang">Sedang</option>
+        <option value="tinggi" title="Olahraga intensif atau pekerjaan fisik berat">Tinggi</option>
+        <option value="sangat_tinggi" title="Aktivitas sangat berat seperti latihan atlet profesional">Sangat Tinggi</option>
+      </select>
+
+      <label for="cuaca">Cuaca saat ini:</label>
+      <select id="cuaca">
+        <option value="normal">Normal</option>
+        <option value="panas">Panas</option>
+      </select>
+
+      <label for="kondisi">Kondisi khusus:</label>
+      <select id="kondisi">
+        <option value="normal">Tidak Ada</option>
+        <option value="hamil">Hamil</option>
+        <option value="menyusui">Menyusui</option>
+      </select>
+
+      <label for="startTime">Waktu mulai:</label>
+      <input type="time" id="startTime" required />
+      <label for="endTime">Waktu akhir:</label>
+      <input type="time" id="endTime" required />
+      
+      <button type="submit">💧 Hitung & Mulai Pengingat</button>
+    </form>
+
+    <div id="reset">
+      <button type="button" id="resetButton">🔄 Reset</button>
+    </div>
+
+    <button type="button" id="openNoteModal">📝 Tambah Catatan</button>
+
+    <div id="suggestionBox" style="display: none;">
+      <h3>Saran Konsumsi Air</h3>
+      <ul id="suggestionList"></ul>
+    </div>
+
+    <div style="margin-top: 1rem;">
+      <label class="switch">
+        <input type="checkbox" id="notifyToggle" disabled>
+        <span class="slider"></span>
+      </label>
+      <span id="toggleLabel">Notifikasi Mati</span>
+    </div>
+
+    <div id="countdownTimer" style="display:none; margin-top:1rem; font-weight:bold;">
+      ⏳ Waktu hingga pengingat berikutnya: <span id="timerDisplay">--:--</span>
+    </div>
+
+    <!-- Kontrol Rekaman -->
+    <div class="audio-control-wrapper">
+      <div class="audio-button-group">
+        <button type="button" id="startRecord" title="Rekam">🎙️</button>
+        <button type="button" id="stopRecord" title="Stop" disabled>🔴</button>
+        <button type="button" id="deleteAudioBtn" title="Hapus Suara" style="display: none;">🗑️</button>
+      </div>
+
+      <audio id="recordedAudio" controls style="display: none;"></audio>
+    </div>
+
+    <p class="footer-text">
+      Made with 💙 <strong>Web Warriors</strong>
+    </p>
+
+    <div id="recordStatus" style="display: none; align-items: center; gap: 0.5rem; font-weight: bold;">
+      <span class="dot"></span>
+      <span>Merekam...</span>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+  <div id="noteModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Tulis Catatan</h3>
+    <textarea id="noteInput" rows="4" style="width: 100%; resize: vertical;" placeholder="Tulis catatan untuk pengingat..."></textarea>
+    <button id="saveNote">💾 Simpan Catatan</button>
+  </div>
+</div>
+
+</body>
+</html>
